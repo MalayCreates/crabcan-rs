@@ -1,14 +1,21 @@
 use std::process::exit;
 
-mod cli;
+#[macro_use] extern crate scan_fmt;
 mod errors;
+mod cli;
+mod container;
+mod ipc;
+mod config;
+mod child;
+
+use errors::exit_with_retcode;
 
 fn main() {
-    match cli::parse_args() {
+    match cli::parse_args(){
         Ok(args) => {
             log::info!("{:?}", args);
-            errors::exit_with_retcode(Ok(()))
-        }
+            exit_with_retcode(container::start(args))
+        },
         Err(e) => {
             log::error!("Error while parsing arguments:\n\t{}", e);
             exit(e.get_retcode());

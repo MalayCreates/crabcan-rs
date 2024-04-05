@@ -1,45 +1,46 @@
+use crate::errors::Errcode;
+
 use std::path::PathBuf;
 use structopt::StructOpt;
-
-use crate::errors::Errcode;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "crabcan", about = "A simple container in Rust.")]
 pub struct Args {
-    // Active debug mode
+    /// Activate debug mode
+    // short and long flags (-d, --debug) will be deduced from the field's name
     #[structopt(short, long)]
-    pub debug: bool,
+    debug: bool,
 
-    // Command to execute inside the container
+    /// Command to execute inside the container
     #[structopt(short, long)]
     pub command: String,
 
-    // User ID to create inside the container
+    /// User ID to create inside the container
     #[structopt(short, long)]
     pub uid: u32,
 
-    // Directory to mount as root of the container
+    /// Directory to mount as root of the container
     #[structopt(parse(from_os_str), short = "m", long = "mount")]
     pub mount_dir: PathBuf,
 }
 
 pub fn parse_args() -> Result<Args, Errcode> {
     let args = Args::from_args();
-    // If args.debug: Setup log at debug level
-    // Else: Setup log at info level
-    // Validate argument
-    if args.debug {
+
+    if args.debug{
         setup_log(log::LevelFilter::Debug);
     } else {
         setup_log(log::LevelFilter::Info);
     }
-    if !args.mount_dir.exists() || !args.mount_dir.is_dir() {
+
+    if !args.mount_dir.exists() || !args.mount_dir.is_dir(){
         return Err(Errcode::ArgumentInvalid("mount"));
     }
+
     Ok(args)
 }
 
-pub fn setup_log(level: log::LevelFilter) {
+pub fn setup_log(level: log::LevelFilter){
     env_logger::Builder::from_default_env()
         .format_timestamp_secs()
         .filter(None, level)
