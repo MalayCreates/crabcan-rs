@@ -1,15 +1,16 @@
-use crate::cli::Args;
-use crate::errors::Errcode;
-use crate::config::ContainerOpts;
 use crate::child::generate_child_process;
+use crate::cli::Args;
+use crate::config::ContainerOpts;
+use crate::errors::Errcode;
+use crate::mounts::clean_mounts;
 
-use nix::unistd::Pid;
-use nix::unistd::close;
-use nix::sys::wait::waitpid;
 use nix::sys::utsname::uname;
+use nix::sys::wait::waitpid;
+use nix::unistd::close;
+use nix::unistd::Pid;
 use std::os::unix::io::RawFd;
 
-pub struct Container{
+pub struct Container {
     sockets: (RawFd, RawFd),
     config: ContainerOpts,
     child_pid: Option<Pid>,
@@ -17,10 +18,7 @@ pub struct Container{
 
 impl Container {
     pub fn new(args: Args) -> Result<Container, Errcode> {
-        let (config, sockets) = ContainerOpts::new(
-                args.command,
-                args.uid,
-                args.mount_dir)?;
+        let (config, sockets) = ContainerOpts::new(args.command, args.uid, args.mount_dir)?;
 
         Ok(Container {
             sockets,
@@ -36,22 +34,22 @@ impl Container {
         Ok(())
     }
 
-    pub fn clean_exit(&mut self) -> Result<(), Errcode>{
+    pub fn clean_exit(&mut self) -> Result<(), Errcode> {
         log::debug!("Cleaning container");
 
-        if let Err(e) = close(self.sockets.0){
+        if let Err(e) = close(self.sockets.0) {
             log::error!("Unable to close write socket: {:?}", e);
             return Err(Errcode::SocketError(3));
         }
 
-        if let Err(e) = close(self.sockets.1){
+        if let Err(e) = close(self.sockets.1) {
             log::error!("Unable to close read socket: {:?}", e);
             return Err(Errcode::SocketError(4));
         }
+        clean_mounts(&self.config.mount_dir)?;
         Ok(())
     }
 }
-
 
 pub const MINIMAL_KERNEL_VERSION: f32 = 4.8;
 
@@ -77,8 +75,12 @@ pub fn check_linux_version() -> Result<(), Errcode> {
 pub fn start(args: Args) -> Result<(), Errcode> {
     check_linux_version()?;
     let mut container = Container::new(args)?;
-    log::debug!("Container sockets: ({}, {})", container.sockets.0, container.sockets.1);
-    if let Err(e) = container.create(){
+    log::debug!(
+        "Container sockets: ({}, {})",
+        container.sockets.0,
+        container.sockets.1
+    );
+    if let Err(e) = container.create() {
         container.clean_exit()?;
         log::error!("Error while creating container: {:?}", e);
         return Err(e);
@@ -89,10 +91,10 @@ pub fn start(args: Args) -> Result<(), Errcode> {
     container.clean_exit()
 }
 
-pub fn wait_child(pid: Option<Pid>) -> Result<(), Errcode>{
+pub fn wait_child(pid: Option<Pid>) -> Result<(), Errcode> {
     if let Some(child_pid) = pid {
         log::debug!("Waiting for child (pid {}) to finish", child_pid);
-        if let Err(e) = waitpid(child_pid, None){
+        if let Err(e) = waitpid(child_pid, None) {
             log::error!("Error while waiting for pid to finish: {:?}", e);
             return Err(Errcode::ContainerError(1));
         }

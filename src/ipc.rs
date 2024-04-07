@@ -1,17 +1,17 @@
 use crate::errors::Errcode;
 
+use nix::sys::socket::{recv, send, socketpair, AddressFamily, MsgFlags, SockFlag, SockType};
 use std::os::unix::io::RawFd;
-use nix::sys::socket::{socketpair, AddressFamily, SockType, SockFlag, send, MsgFlags, recv};
 
 pub fn generate_socketpair() -> Result<(RawFd, RawFd), Errcode> {
     match socketpair(
         AddressFamily::Unix,
         SockType::SeqPacket,
         None,
-        SockFlag::SOCK_CLOEXEC)
-    {
+        SockFlag::SOCK_CLOEXEC,
+    ) {
         Ok(res) => Ok(res),
-        Err(_) => Err(Errcode::SocketError(0))
+        Err(_) => Err(Errcode::SocketError(0)),
     }
 }
 
