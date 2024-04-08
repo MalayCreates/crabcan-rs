@@ -14,6 +14,7 @@ pub enum Errcode {
     HostnameError(u8),
     RNGError,
     MountsError(u8),
+    NamespaceError(u8),
 }
 
 impl Errcode {

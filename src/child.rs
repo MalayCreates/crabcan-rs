@@ -2,6 +2,7 @@ use crate::config::ContainerOpts;
 use crate::errors::Errcode;
 use crate::hostname::set_contianer_hostname;
 use crate::mounts::set_container_mountpoint;
+use crate::namespaces::userns;
 
 use nix::sched::clone;
 use nix::sched::CloneFlags;
@@ -50,5 +51,6 @@ pub fn generate_child_process(config: ContainerOpts) -> Result<Pid, Errcode> {
 fn setup_container_configurations(config: &ContainerOpts) -> Result<(), Errcode> {
     set_contianer_hostname(&config.hostname)?;
     set_container_mountpoint(&config.mount_dir)?;
+    userns(config.fd, config.uid)?;
     Ok(())
 }

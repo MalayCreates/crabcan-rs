@@ -10,6 +10,7 @@ mod errors;
 mod hostname;
 mod ipc;
 mod mounts;
+mod namespaces;
 
 use errors::exit_with_retcode;
 

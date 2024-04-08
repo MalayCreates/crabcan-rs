@@ -1,4 +1,7 @@
-use std::{fs::{create_dir_all, remove_dir}, path::PathBuf};
+use std::{
+    fs::{create_dir_all, remove_dir},
+    path::PathBuf,
+};
 
 use nix::{
     mount::{mount, umount2, MntFlags, MsFlags},
@@ -31,7 +34,7 @@ pub fn set_container_mountpoint(mount_dir: &PathBuf) -> Result<(), Errcode> {
     log::debug!("Unmounting old root");
     let old_root = PathBuf::from(format!("/{}", old_root_tail));
     // make sure not inside dir we are Unmounting
-    if let Err(_) = chdir(&PathBuf::from("/")){
+    if let Err(_) = chdir(&PathBuf::from("/")) {
         return Err(Errcode::MountsError(5));
     }
     unmount_path(&old_root)?;
@@ -71,8 +74,8 @@ pub fn mount_directory(
     }
 }
 
-pub fn unmount_path(path: &PathBuf) -> Result<(),Errcode>{
-    match umount2(path, MntFlags::MNT_DETACH){
+pub fn unmount_path(path: &PathBuf) -> Result<(), Errcode> {
+    match umount2(path, MntFlags::MNT_DETACH) {
         Ok(_) => Ok(()),
         Err(e) => {
             log::error!("Unable to unmount {}: {}", path.to_str().unwrap(), e);
@@ -81,11 +84,15 @@ pub fn unmount_path(path: &PathBuf) -> Result<(),Errcode>{
     }
 }
 
-pub fn delete_dir(path: &PathBuf) -> Result<(), Errcode>{
-    match remove_dir(path.as_path()){
+pub fn delete_dir(path: &PathBuf) -> Result<(), Errcode> {
+    match remove_dir(path.as_path()) {
         Ok(_) => Ok(()),
         Err(e) => {
-            log::error!("Unable to delete directory {}: {}", path.to_str().unwrap(), e);
+            log::error!(
+                "Unable to delete directory {}: {}",
+                path.to_str().unwrap(),
+                e
+            );
             Err(Errcode::MountsError(1))
         }
     }
