@@ -7,6 +7,7 @@ use crate::namespaces::userns;
 use nix::sched::clone;
 use nix::sched::CloneFlags;
 use nix::sys::signal::Signal;
+use nix::unistd::close;
 use nix::unistd::Pid;
 
 const STACK_SIZE: usize = 1024 * 1024;
@@ -18,6 +19,10 @@ fn child(config: ContainerOpts) -> isize {
             log::error!("Error while configuring crabcan: {:?}", e);
             return -1;
         }
+    }
+    if let Err(_) = close(config.fd){
+        log::error!("Error while closing socket...");
+        return -1;
     }
     log::info!(
         "Starting container with command {} and args {:?}",
